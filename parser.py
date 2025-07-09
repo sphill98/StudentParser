@@ -30,7 +30,7 @@ def extract_grades(pdf_path, output_csv_path='output.csv'):
 
         # 과목명 필터링 (ex: 국어, 수학, 물리학Ⅰ 등)
         if len(cols) >= 5 and any(sub in cols[0] for sub in ["국어", "수학", "영어", "물리", "화학", "생명", "정보", "기하", "미적분", "고급", "과학", "문학", "중국어"]):
-            data.append(cols)
+            data.append(cols[:6])
 
     # DataFrame 생성
     df = pd.DataFrame(data, columns=['과목', '단위수', '원점수/평균(표준편차)', '성취도(수강자수)', '석차등급', '비고'])
