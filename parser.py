@@ -39,5 +39,4 @@ def extract_grades(pdf_path, output_csv_path='output.csv'):
     df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
     print(f"성적 데이터가 {output_csv_path} 파일로 저장되었습니다.")
 
-# 사용 예시
-extract_grades("sample.pdf", "성적표.csv")
+
