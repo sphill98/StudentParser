@@ -1,114 +1,128 @@
-import pdfplumber
-import pandas as pd
+import fitz  # PyMuPDF
 import re
+import pandas as pd
+import platform
 
-def extract_grades(pdf_path, output_csv_path='output.csv'):
-    # 파일 경로
-    pdf_path = "이공계열 학생부 샘플.pdf"
-    subject_path = "고등학교 교과목.xlsx"
+# 일반선택 과목 리스트
+general_subjects = set([
+    '국어', '화법과 작문', '독서', '언어와 매체', '문학', '수학', '수학Ⅰ', '수학Ⅱ',
+    '미적분', '확률과 통계', '영어', '영어Ⅰ', '영어Ⅱ', '영어 회화', '영어 독해와 작문',
+    '통합사회', '한국지리', '세계지리', '세계사', '동아시아사', '경제', '정치와 법',
+    '사회·문화', '생활과 윤리', '윤리와 사상', '통합과학', '과학탐구실험', '물리학Ⅰ',
+    '화학Ⅰ', '생명과학Ⅰ', '지구과학Ⅰ', '기술·가정', '정보', '독일어Ⅰ', '프랑스어Ⅰ',
+    '스페인어Ⅰ', '중국어Ⅰ', '일본어Ⅰ', '러시아어Ⅰ', '아랍어Ⅰ', '베트남어Ⅰ', '한문Ⅰ',
+    '국제 정치', '국제 경제', '국제법', '지역 이해', '한국 사회의 이해', '비교 문화',
+    '세계 문제와 미래 사회', '국제 관계와 국제기구', '현대 세계의 변화', '철학', '논리학',
+    '심리학', '교육학', '종교학', '진로와 직업', '보건', '환경', '실용 경제', '논술'
+])
 
-    # 학기 정보 (과목 수에 따라 작성)
-    학기_정보 = (
-            ["1학년 1학기"] * 8 +
-            ["1학년 2학기"] * 10 +
-            ["2학년 1학기"] * 9 +
-            ["2학년 2학기"] * 7
-    )
+def extract_section_text(lines, start_idx, end_idx):
+    return lines[start_idx:end_idx]
 
-    # ----------------------------------------
-    # 1. 교과목 리스트 불러와서 교과구분 매핑 테이블 생성
-    # ----------------------------------------
-    subject_df = pd.read_excel(subject_path, sheet_name="선택과목", header=None)
-    subject_mappings = []
-    current_구분2 = None
-    current_구분1 = None
-
-    for _, row in subject_df.iterrows():
-        row_values = row.dropna().tolist()
-        if len(row_values) == 0:
-            continue
-        if len(row_values) == 1 and "과" in row_values[0]:
-            current_구분2 = row_values[0].replace(" ", "").replace("(", "").replace(")", "")
-        elif any(x in str(row_values[0]) for x in ["일반", "진로"]):
-            current_구분1 = row_values[0].strip()
-            if len(row_values) > 1:
-                for 과목명 in ",".join(row_values[1:]).replace("\t", "").split(","):
-                    과목명 = 과목명.strip()
-                    if 과목명:
-                        subject_mappings.append({
-                            "교과구분1": current_구분1,
-                            "교과구분2": current_구분2,
-                            "과목명": 과목명
-                        })
-
-    subject_map_df = pd.DataFrame(subject_mappings)
-
-    # 포함 문자열 기반 매칭 함수
-    def fuzzy_map_subject_info(과목명):
-        filtered = subject_map_df[subject_map_df["과목명"].str.contains(과목명, na=False)]
-        if not filtered.empty:
-            return filtered.iloc[0]["교과구분1"], filtered.iloc[0]["교과구분2"]
-        else:
-            return None, None
-
-    # ----------------------------------------
-    # 2. PDF에서 성적 정보 추출
-    # ----------------------------------------
-    with pdfplumber.open(pdf_path) as pdf:
-        pages = [pdf.pages[i].extract_text().replace("\n", " ") for i in [11, 12, 17]]  # 12,13,18쪽
-
-    text = " ".join(pages)
-
-    # 성적 정보 정규식 추출
-    pattern = r"([가-힣ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]+)\s+(\d+)\s+(\d+)/([\d.]+)\(([\d.]+)\)\s+([ABC])\((\d+)\)\s*(\d*)"
-    matches = re.findall(pattern, text)
-
-    # 데이터 저장
+def parse_grade_section(lines, grade):
     records = []
-    for i, match in enumerate(matches):
-        과목 = match[0]
-        단위 = int(match[1])
-        원점수 = int(match[2])
-        평균 = float(match[3])
-        편차 = float(match[4])
-        성취도 = match[5]
-        수강자수 = int(match[6])
-        석차등급 = match[7] if match[7] else None
+    semester = "1학기"
+    term = f"{grade}{semester}"
+    i = 0
+    while i + 5 < len(lines):
+        try:
+            l0, l1, l2, l3, l4, l5 = lines[i:i+6]
+            subject_area = l0.strip()
+            subject = l1.strip()
+            unit = l2.strip()
+            score_str = l3.strip()
+            grade_str = l4.strip()
+            rank = l5.strip()
 
-        교과구분1, 교과구분2 = fuzzy_map_subject_info(과목)
+            # 학기 변경 감지
+            if "2학기" in subject_area:
+                semester = "2학기"
+                term = f"{grade}{semester}"
+                i += 1
+                continue
 
-        records.append({
-            "학년/학기": 학기_정보[i],
-            "교과 구분1": 교과구분1,
-            "교과 구분2": 교과구분2,
-            "과목명": 과목,
-            "단위": 단위,
-            "원점수": 원점수,
-            "평균": 평균,
-            "편차": 편차,
-            "성취도": 성취도,
-            "수강자수": 수강자수,
-            "A": 1 if 성취도 == 'A' else 0,
-            "B": 1 if 성취도 == 'B' else 0,
-            "C": 1 if 성취도 == 'C' else 0,
-            "석차등급": 석차등급
-        })
+            if not re.match(r"\d+\.?\d*/\d+\.?\d*\(\d+\.?\d*\)", score_str):
+                i += 1
+                continue
 
-    # ----------------------------------------
-    # 3. DataFrame 구성 및 출력/저장
-    # ----------------------------------------
-    columns_order = [
+            group1 = "일반선택" if subject in general_subjects else "진로선택"
+
+            if "영어" in subject:
+                group2 = "영어"
+            elif "수학" in subject:
+                group2 = "수학"
+            elif "국어" in subject:
+                group2 = "국어"
+            elif "중국어" in subject or "프랑스어" in subject:
+                group2 = "제2외국어"
+            elif "과학" in subject:
+                group2 = "과학"
+            elif "법" in subject or "정치" in subject or "사회" in subject:
+                group2 = "사회"
+            else:
+                group2 = "기타"
+
+            sm = re.match(r"(\d+\.?\d*)/(\d+\.?\d*)\((\d+\.?\d*)\)", score_str)
+            score, avg, std = sm.groups() if sm else ("", "", "")
+
+            gm = re.match(r"([ABC])\((\d+)\)", grade_str)
+            achievement, total = gm.groups() if gm else ("", "")
+
+            A = B = C = ""
+            if achievement == "A":
+                A = total
+            elif achievement == "B":
+                B = total
+            elif achievement == "C":
+                C = total
+
+            records.append([
+                term, group1, group2, subject, unit,
+                score, avg, std, achievement, total,
+                A, B, C, rank
+            ])
+            i += 6
+        except Exception:
+            i += 1
+            continue
+    return records
+
+def extract_grades_from_pdf(pdf_path, output_csv_path):
+    doc = fitz.open(pdf_path)
+    full_text = "\n".join([page.get_text() for page in doc])
+    lines = full_text.split('\n')
+
+    section_indices = {}
+    for idx, line in enumerate(lines):
+        if line.strip() == "[1학년]":
+            section_indices["1학년"] = idx
+        elif line.strip() == "[2학년]":
+            section_indices["2학년"] = idx
+        elif line.strip() == "[3학년]":
+            section_indices["3학년"] = idx
+
+    all_records = []
+    grade_keys = sorted(section_indices.keys())
+    for idx, grade in enumerate(grade_keys):
+        start = section_indices[grade]
+        end = section_indices[grade_keys[idx+1]] if idx+1 < len(grade_keys) else len(lines)
+        section_lines = extract_section_text(lines, start, end)
+        all_records.extend(parse_grade_section(section_lines, grade))
+
+    df = pd.DataFrame(all_records, columns=[
         "학년/학기", "교과 구분1", "교과 구분2", "과목명", "단위",
         "원점수", "평균", "편차", "성취도", "수강자수",
         "A", "B", "C", "석차등급"
-    ]
+    ])
 
-    df = pd.DataFrame(records)[columns_order]
+    # OS에 맞춰 인코딩 선택
+    system = platform.system()
+    encoding = "cp949" if system == "Windows" else "utf-8-sig"
 
-    # CSV 저장 (선택)
-    df.to_csv("완성된_성적표.csv", index=False)
+    df.to_csv(output_csv_path, index=False, encoding=encoding)
+    print(f"CSV 저장 완료: {output_csv_path}")
 
-    # 결과 확인
-    print(df)
-
-
+if __name__ == "__main__":
+    input_pdf = "경북외고 생활기록부.pdf"
+    output_csv = "성적_추출_결과.csv"
+    extract_grades_from_pdf(input_pdf, output_csv)
