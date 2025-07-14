@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학생 성적 오각형 그래프</title>
+<script src="https://cdn.tailwindcss.com"></script>;
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"; rel="stylesheet">
+<style>
+body {
+font-family: 'Inter', sans-serif;
+background-color: #f0f4f8;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+margin: 0;
+padding: 20px;
+box-sizing: border-box;
+}
+.container {
+background-color: #ffffff;
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+padding: 30px;
+max-width: 600px;
+width: 100%;
+text-align: center;
+}
+canvas {
+display: block;
+margin: 0 auto;
+max-width: 100%;
+height: auto; /* Ensures canvas scales proportionally */
+}
+.title {
+font-size: 1.8rem;
+font-weight: 700;
+color: #2c3e50;
+margin-bottom: 20px;
+}
+.legend-container {
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 15px;
+margin-top: 25px;
+margin-bottom: 20px;
+}
+.legend-item {
+display: flex;
+align-items: center;
+font-size: 0.95rem;
+color: #4a5568;
+font-weight: 500;
+}
+.legend-color {
+width: 18px;
+height: 18px;
+border-radius: 4px;
+margin-right: 8px;
+border: 1px solid rgba(0,0,0,0.1);
+}
+.input-section {
+margin-top: 20px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+.input-group {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+}
+.input-group label {
+font-weight: 600;
+color: #333;
+width: 80px;
+text-align: right;
+}
+.input-group input {
+flex-grow: 1;
+padding: 8px 12px;
+border: 1px solid #ddd;
+border-radius: 6px;
+font-size: 1rem;
+max-width: 150px;
+}
+.update-button {
+background-color: #4a90e2;
+color: white;
+padding: 10px 20px;
+border-radius: 8px;
+font-weight: 600;
+cursor: pointer;
+transition: background-color 0.2s ease;
+margin-top: 20px;
+border: none;
+width: fit-content;
+align-self: center;
+}
+.update-button:hover {
+background-color: #357bd8;
+}
+.error-message {
+color: #e53e3e;
+font-size: 0.85rem;
+margin-top: 10px;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1 class="title">학생 성적 오각형 그래프</h1>
+<canvas id="gradeRadarChart" width="500" height="500"></canvas>
+<div class="legend-container">
+<div class="legend-item"><div class="legend-color" style="background-color: #FF6384;"></div>국어</div>
+<div class="legend-item"><div class="legend-color" style="background-color: #36A2EB;"></div>수학</div>
+<div class="legend-item"><div class="legend-color" style="background-color: #FFCE56;"></div>영어</div>
+<div class="legend-item"><div class="legend-color" style="background-color: #4BC0C0;"></div>사회</div>
+<div class="legend-item"><div class="legend-color" style="background-color: #9966FF;"></div>과학</div>
+</div>
+
+<div class="input-section">
+<div class="input-group">
+<label for="koreanGrade">국어 성적:</label>
+<input type="number" id="koreanGrade" value="2.33" step="0.01" min="1" max="5">
+</div>
+<div class="input-group">
+<label for="mathGrade">수학 성적:</label>
+<input type="number" id="mathGrade" value="1.47" step="0.01" min="1" max="5">
+</div>
+<div class="input-group">
+<label for="englishGrade">영어 성적:</label>
+<input type="number" id="englishGrade" value="2.21" step="0.01" min="1" max="5">
+</div>
+<div class="input-group">
+<label for="socialGrade">사회 성적:</label>
+<input type="number" id="socialGrade" value="2.50" step="0.01" min="1" max="5">
+</div>
+<div class="input-group">
+<label for="scienceGrade">과학 성적:</label>
+<input type="number" id="scienceGrade" value="1.39" step="0.01" min="1" max="5">
+</div>
+<button class="update-button" onclick="updateChart()">그래프 업데이트</button>
+<div id="errorMessage" class="error-message hidden"></div>
+</div>
+</div>
+
+<script>
+const initialGrades = [
+{ name: '국어', value: 2.33, color: '#FF6384', inputId: 'koreanGrade' },
+{ name: '수학', value: 1.47, color: '#36A2EB', inputId: 'mathGrade' },
+{ name: '영어', value: 2.21, color: '#FFCE56', inputId: 'englishGrade' },
+{ name: '사회', value: 2.50, color: '#4BC0C0', inputId: 'socialGrade' },
+{ name: '과학', value: 1.39, color: '#9966FF', inputId: 'scienceGrade' }
+];
+
+let currentGrades = [...initialGrades]; // Use a copy for current state
+
+window.onload = function() {
+// Populate input fields with initial values
+initialGrades.forEach(item => {
+const inputElement = document.getElementById(item.inputId);
+if (inputElement) {
+inputElement.value = item.value.toFixed(2);
+}
+});
+drawRadarChart();
+
+// Initial resize
+resizeCanvas();
+// Event listener for window resize
+window.addEventListener('resize', resizeCanvas);
+};
+
+function updateChart() {
+const errorMessageElement = document.getElementById('errorMessage');
+errorMessageElement.textContent = ''; // Clear previous errors
+errorMessageElement.classList.add('hidden');
+
+const newGrades = [];
+let isValid = true;
+
+currentGrades.forEach(item => {
+const inputElement = document.getElementById(item.inputId);
+const inputValue = parseFloat(inputElement.value);
+
+if (isNaN(inputValue) || inputValue < 1 || inputValue > 5) {
+errorMessageElement.textContent = '모든 성적은 1에서 5 사이의 숫자로 입력해야 합니다.';
+errorMessageElement.classList.remove('hidden');
+isValid = false;
+}
+newGrades.push({ ...item, value: inputValue });
+});
+
+if (isValid) {
+currentGrades = newGrades;
+drawRadarChart(); // Redraw chart with new data
+}
+}
+
+// Canvas drawing functions (mostly unchanged from previous version)
+const canvas = document.getElementById('gradeRadarChart');
+const ctx = canvas.getContext('2d');
+const width = canvas.width;
+const height = canvas.height;
+const centerX = width / 2;
+const centerY = height / 2;
+const radius = Math.min(width, height) / 2 * 0.7; // Graph radius
+
+// Data for the radar chart (now dynamically updated)
+const data = {
+labels: ['국어', '수학', '영어', '사회', '과학'],
+gradeSteps: 5 // Grades from 1 to 5
+};
+
+function drawRadarChart() {
+ctx.clearRect(0, 0, width, height); // Clear canvas
+
+// Draw background concentric polygons (grade rings)
+ctx.strokeStyle = '#cccccc'; // Light grey for grid lines
+ctx.lineWidth = 1;
+
+for (let i = 0; i <= data.gradeSteps; i++) {
+const currentRadius = radius * (1 - (i / data.gradeSteps));
+ctx.beginPath();
+for (let j = 0; j < data.labels.length; j++) {
+const angle = (Math.PI * 2 / data.labels.length) * j - Math.PI / 2;
+const x = centerX + currentRadius * Math.cos(angle);
+const y = centerY + currentRadius * Math.sin(angle);
+if (j === 0) {
+ctx.moveTo(x, y);
+} else {
+ctx.lineTo(x, y);
+}
+}
+ctx.closePath();
+ctx.stroke();
+}
+
+// Draw axis lines
+ctx.strokeStyle = '#999999';
+for (let i = 0; i < data.labels.length; i++) {
+const angle = (Math.PI * 2 / data.labels.length) * i - Math.PI / 2;
+ctx.beginPath();
+ctx.moveTo(centerX, centerY);
+ctx.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+ctx.stroke();
+
+// Draw axis labels (subject names)
+ctx.fillStyle = '#333333';
+ctx.font = '16px Inter';
+const labelOffset = 25;
+const labelX = centerX + (radius + labelOffset) * Math.cos(angle);
+const labelY = centerY + (radius + labelOffset) * Math.sin(angle);
+
+if (angle > -Math.PI / 4 && angle < Math.PI / 4) {
+ctx.textAlign = 'left';
+} else if (angle > Math.PI * 3 / 4 || angle < -Math.PI * 3 / 4) {
+ctx.textAlign = 'right';
+} else {
+ctx.textAlign = 'center';
+}
+ctx.fillText(data.labels[i], labelX, labelY);
+}
+
+// Draw data polygon outline (overall performance shape)
+ctx.beginPath();
+ctx.strokeStyle = '#555555';
+ctx.lineWidth = 3;
+
+currentGrades.forEach((item, index) => { // Use currentGrades here
+const grade = item.value;
+const normalizedGrade = (data.gradeSteps - grade) / (data.gradeSteps - 1);
+const pointRadius = radius * Math.max(0, normalizedGrade);
+
+const angle = (Math.PI * 2 / data.labels.length) * index - Math.PI / 2;
+const x = centerX + pointRadius * Math.cos(angle);
+const y = centerY + pointRadius * Math.sin(angle);
+
+if (index === 0) {
+ctx.moveTo(x, y);
+} else {
+ctx.lineTo(x, y);
+}
+});
+ctx.closePath();
+ctx.stroke();
+
+// Fill the data polygon with a light, transparent color
+ctx.fillStyle = 'rgba(102, 102, 255, 0.2)';
+ctx.fill();
+
+// Draw individual subject lines from center to data point, with subject's color
+currentGrades.forEach((item, index) => { // Use currentGrades here
+const grade = item.value;
+const normalizedGrade = (data.gradeSteps - grade) / (data.gradeSteps - 1);
+const pointRadius = radius * Math.max(0, normalizedGrade);
+
+const angle = (Math.PI * 2 / data.labels.length) * index - Math.PI / 2;
+const x = centerX + pointRadius * Math.cos(angle);
+const y = centerY + pointRadius * Math.sin(angle);
+
+// Draw the line from center to the data point
+ctx.beginPath();
+ctx.moveTo(centerX, centerY);
+ctx.lineTo(x, y);
+ctx.strokeStyle = item.color;
+ctx.lineWidth = 2;
+ctx.stroke();
+
+// Draw data point circles
+ctx.fillStyle = item.color;
+ctx.beginPath();
+ctx.arc(x, y, 6, 0, Math.PI * 2);
+ctx.fill();
+ctx.strokeStyle = '#ffffff';
+ctx.lineWidth = 1.5;
+ctx.stroke();
+
+// Draw numerical grade labels next to points
+ctx.fillStyle = '#333333';
+ctx.font = '12px Inter';
+const textOffsetX = pointRadius > 0 ? 15 * Math.cos(angle) : 15;
+const textOffsetY = pointRadius > 0 ? 15 * Math.sin(angle) : 15;
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText(item.value.toFixed(2), x + textOffsetX, y + textOffsetY);
+});
+}
+
+function resizeCanvas() {
+const canvas = document.getElementById('gradeRadarChart');
+const parentWidth = canvas.parentElement.clientWidth;
+const size = Math.min(parentWidth, 500);
+canvas.width = size;
+canvas.height = size;
+drawRadarChart();
+}
+</script>
+</body>
+</html>
