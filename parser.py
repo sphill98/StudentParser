@@ -28,7 +28,7 @@ def parse_grade(grade_str):
 # 과목명으로 교과 구분 추정
 def map_subject(name):
     name = name.replace("\n", "").strip()
-    return subject_mapping.get(name, ("기타", ""))
+    return subject_mapping.get(name, ("기타", "진로선택"))
 
 def parse_general_score_block(lines, i, current_grade, current_semester):
     if i + 4 < len(lines) and re.match(r"\d+\/[\d.]+\([\d.]+\)", lines[i+3]):
@@ -62,6 +62,7 @@ def parse_pass_grade_block(lines, i, current_grade, current_semester):
         if i + 2 < len(lines) and lines[i + 2] == "P":
             과목후보 = lines[i:i + 3]
             과목명 = 과목후보[0] if not re.match(r"\d+", 과목후보[0]) else ""
+            단위 = ""
             for j in range(len(과목후보)):
                 if re.match(r"^\d+$", 과목후보[j]):
                     과목명 = ''.join(과목후보[:j])
