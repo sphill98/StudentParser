@@ -6,12 +6,19 @@
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="mb-4">생기부 PDF를 선택해주세요</h1>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="alert alert-danger">
+              {{ messages[0] }}
+            </div>
+          {% endif %}
+        {% endwith %}
+        <h1 class="mb-4">생활기록부 PDF 해체분석기</h1>
         <form action="/upload" method="post" enctype="multipart/form-data">
             <div class="mb-3">
                 <input type="file" class="form-control" name="file">
             </div>
-            <button type="submit" class="btn btn-primary">파일 업로드</button>
+            <button type="submit" class="btn btn-primary">업로드하기</button>
         </form>
     </div>
 </body>

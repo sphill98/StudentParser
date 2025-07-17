@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, session
+from flask import Flask, render_template, request, send_file, session, flash, redirect, url_for
 import pandas as pd
 import os
 from parser import extract_subjects_from_pdf
@@ -16,10 +16,12 @@ def index():
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
-            return 'No file part'
+            flash('No file part')
+            return redirect(request.url)
         file = request.files['file']
         if file.filename == '':
-            return 'No selected file'
+            flash('No selected file')
+            return redirect(request.url)
         if file:
             filename = file.filename
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -42,14 +44,15 @@ def upload_file():
                 
                 return render_template('download.html', filename=csv_filename)
             except Exception as e:
-                return f"An error occurred: {e}"
+                flash(f"An error occurred: {e}")
+                return redirect(url_for('index'))
     else: # GET request
         csv_path = session.get('csv_path')
         if csv_path and os.path.exists(csv_path):
             filename = os.path.basename(csv_path)
             return render_template('download.html', filename=filename)
         else:
-            return render_template('index.html')
+            return redirect(url_for('index'))
 
 @app.route('/download/<filename>')
 def download_file(filename):
