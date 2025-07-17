@@ -3,7 +3,7 @@ import os
 
 def create_app():
     app = Flask(__name__)
-    app.config['UPLOAD_FOLDER'] = 'uploads'
+    app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
     app.secret_key = os.urandom(24)
 
     from .main import main as main_blueprint
