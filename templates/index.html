@@ -2,13 +2,17 @@
 <html>
 <head>
     <title>Student Grade Parser</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Upload your PDF report card</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload and Process">
-    </form>
-    <a href="/graph">View Grade Graph</a>
+    <div class="container mt-5">
+        <h1 class="mb-4">생기부 PDF를 선택해주세요</h1>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input type="file" class="form-control" name="file">
+            </div>
+            <button type="submit" class="btn btn-primary">파일 업로드</button>
+        </form>
+    </div>
 </body>
 </html>

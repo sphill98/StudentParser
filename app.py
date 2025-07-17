@@ -12,59 +12,106 @@ app.secret_key = os.urandom(24)
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
-    if 'file' not in request.files:
-        return 'No file part'
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        filename = file.filename
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        
-        try:
-            df = extract_subjects_from_pdf(filepath)
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return 'No file part'
+        file = request.files['file']
+        if file.filename == '':
+            return 'No selected file'
+        if file:
+            filename = file.filename
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
             
-            # Store dataframe in session
-            session['dataframe'] = df.to_json()
+            try:
+                df = extract_subjects_from_pdf(filepath)
+                
+                # Store dataframe in session
+                session['dataframe'] = df.to_json()
 
-            # Generate a unique filename for the CSV
-            csv_filename = f"output_{uuid.uuid4().hex}.csv"
-            output_csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
-            
-            df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
-            
-            # Store the csv path in the session for download
-            session['csv_path'] = output_csv_path
-            
-            return render_template('download.html', filename=csv_filename)
-        except Exception as e:
-            return f"An error occurred: {e}"
+                # Generate a unique filename for the CSV
+                csv_filename = f"output_{uuid.uuid4().hex}.csv"
+                output_csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
+                
+                df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
+                
+                # Store the csv path in the session for download
+                session['csv_path'] = output_csv_path
+                
+                return render_template('download.html', filename=csv_filename)
+            except Exception as e:
+                return f"An error occurred: {e}"
+    else: # GET request
+        csv_path = session.get('csv_path')
+        if csv_path and os.path.exists(csv_path):
+            filename = os.path.basename(csv_path)
+            return render_template('download.html', filename=filename)
+        else:
+            return render_template('index.html')
 
 @app.route('/download/<filename>')
 def download_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     return send_file(path, as_attachment=True)
 
-from calculators import compute_main_subject_averages
+from calculators import compute_main_subject_averages, compute_science_subject_averages, \
+    compute_liberal_subject_averages
 
-@app.route('/graph')
-def graph():
+
+@app.route('/graph-general')
+def graph_general():
     df_json = session.get('dataframe')
     if not df_json:
         return "Dataframe not found in session. Please upload a file first."
 
     df = pd.read_json(df_json)
     averages = compute_main_subject_averages(df)
-    print(averages)
     labels = ["국어", "수학", "영어", "사탐", "과탐"]
     data = []
     for l in labels:
         data.append(averages[l])
 
-    return render_template('graph.html', labels=labels, data=data)
+    return render_template('graph_general.html', labels=labels, data=data)
+
+@app.route('/graph-science')
+def graph_science():
+    df_json = session.get('dataframe')
+    if not df_json:
+        return "Dataframe not found in session. Please upload a file first."
+
+    df = pd.read_json(df_json)
+    averages = compute_science_subject_averages(df)
+    print(averages)
+    labels = ["통합과학", "물리학Ⅰ", "화학Ⅰ", "생명과학Ⅰ", "지구과학Ⅰ"]
+    real_labels = []
+    data = []
+    for l in labels:
+        if l in averages.keys():
+            real_labels.append(l)
+            data.append(averages[l])
+
+    return render_template('graph_science.html', labels=real_labels, data=data)
+
+@app.route('/graph-liberal')
+def graph_liberal():
+    df_json = session.get('dataframe')
+    if not df_json:
+        return "Dataframe not found in session. Please upload a file first."
+
+    df = pd.read_json(df_json)
+    averages = compute_liberal_subject_averages(df)
+    print(averages)
+    labels = ["통합사회", "한국사", "한국지리", "세계지리", "세계사", "동아시아사", "경제", "정치와 법", "생활과 윤리", "윤리와 사상", "사회·문화"]
+    real_labels = []
+    data = []
+    for l in labels:
+        if l in averages.keys():
+            real_labels.append(l)
+            data.append(averages[l])
+
+    return render_template('graph_liberal.html', labels=real_labels, data=data)
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])

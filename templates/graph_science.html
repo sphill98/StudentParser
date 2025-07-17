@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>과학 교과 성적 그래프</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      background-color: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      gap: 30px;
+    }
+    .legend-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.95rem;
+      color: #4a5568;
+      font-weight: 500;
+    }
+    .legend-color {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      margin-right: 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    canvas {
+      max-width: 500px;
+      max-height: 500px;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gradeRadarChart"></canvas>
+
+
+
+<a href="{{ url_for('upload_file') }}" class="btn btn-primary">Return</a>
+
+<script>
+  const labels = {{ labels | tojson }};
+  const values = {{ data | tojson }};
+
+  // 사용자 정의 플러그인: 다각형 내부 채우기
+  const customFillPolygon = {
+    id: 'customFillPolygon',
+    beforeDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const rScale = scales.r;
+      const dataset = chart.data.datasets[0];
+      const meta = chart.getDatasetMeta(0);
+
+      ctx.save();
+      ctx.beginPath();
+
+      // 점을 기준으로 경로 생성
+      meta.data.forEach((point, index) => {
+        const { x, y } = point.tooltipPosition();
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.4)'; // 보라색으로 채우기
+      ctx.fill();
+      ctx.restore();
+    }
+  };
+
+
+  const ctx = document.getElementById('gradeRadarChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '과학 교과 성적',
+        data: values,
+        fill: false,  // 🛑 기본 fill 제거
+        borderColor: '#4a4a4a',
+        borderWidth: 2,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: '#fff',
+        pointHoverBorderColor: '#333'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 1,
+          max: 5,
+          reverse: true,  // ✅ 1등급이 바깥
+          ticks: {
+            stepSize: 1,
+            color: '#333'
+          },
+          pointLabels: {
+            font: {
+              size: 14
+            }
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          color: '#000',
+          font: {
+            size: 12,
+            weight: 'bold'
+          },
+          formatter: (val) => val.toFixed(2)
+        }
+      }
+    },
+    plugins: [ChartDataLabels, customFillPolygon]
+  });
+</script>
+
+</body>
+</html>

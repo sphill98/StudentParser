@@ -2,16 +2,17 @@
 <html>
 <head>
     <title>Download CSV</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Your file has been processed!</h1>
-    <p>
-        <a href="{{ url_for('download_file', filename=filename) }}">
-            <button>Download CSV</button>
-        </a>
-        <a href="{{ url_for('graph') }}">
-            <button>See Graph</button>
-        </a>
-    </p>
+    <div class="container mt-5">
+        <h1 class="mb-4">어떤 성적을 보시겠습니까?</h1>
+        <div class="d-grid gap-2">
+            <a href="{{ url_for('download_file', filename=filename) }}" class="btn btn-success">성적표 다운로드하기</a>
+            <a href="{{ url_for('graph_general') }}" class="btn btn-info">전체 과목 그래프</a>
+            <a href="{{ url_for('graph_science') }}" class="btn btn-info">과탐 과목 그래프</a>
+            <a href="{{ url_for('graph_liberal') }}" class="btn btn-info">사탐 과목 그래프</a>
+        </div>
+    </div>
 </body>
 </html>
