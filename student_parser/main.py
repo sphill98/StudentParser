@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, send_file, session, flash, redirect, url_for
+from flask import Blueprint, render_template, request, send_file, session, flash, redirect, url_for, current_app
 import pandas as pd
 import os
 from .parser import extract_subjects_from_pdf
@@ -14,7 +14,8 @@ def allowed_file(filename):
 
 @main.route('/')
 def index():
-    session.clear()
+    if request.args.get('clear_session'):
+        session.clear()
     return render_template('index.html')
 
 @main.route('/upload', methods=['GET', 'POST'])
@@ -22,15 +23,15 @@ def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
-            return redirect(request.url)
+            return redirect(url_for('main.index'))
         file = request.files['file']
         if file.filename == '':
             flash('No selected file')
-            return redirect(request.url)
+            return redirect(url_for('main.index'))
         if file and allowed_file(file.filename):
             filename = file.filename
             # Use app's upload folder config
-            filepath = os.path.join(main.app.config['UPLOAD_FOLDER'], filename)
+            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             
             try:
@@ -39,7 +40,7 @@ def upload_file():
                 session['dataframe'] = df.to_json()
 
                 csv_filename = f"output_{uuid.uuid4().hex}.csv"
-                output_csv_path = os.path.join(main.app.config['UPLOAD_FOLDER'], csv_filename)
+                output_csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_filename)
                 
                 df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
                 
@@ -51,7 +52,7 @@ def upload_file():
                 return redirect(url_for('main.index'))
         else:
             flash('Only PDF files are allowed')
-            return redirect(request.url)
+            return redirect(url_for('main.index'))
     else: # GET request
         csv_path = session.get('csv_path')
         if csv_path and os.path.exists(csv_path):
@@ -62,7 +63,7 @@ def upload_file():
 
 @main.route('/download/<filename>')
 def download_file(filename):
-    path = os.path.join(main.app.config['UPLOAD_FOLDER'], filename)
+    path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
     return send_file(path, as_attachment=True)
 
 @main.route('/graph-general')

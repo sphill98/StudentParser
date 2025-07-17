@@ -6,9 +6,13 @@ import fitz  # PyMuPDF
 import re
 import pandas as pd
 import json
+import os
 
 # JSON에서 과목 매핑 정보 불러오기
-with open("./static/subject_mapping.json", "r", encoding="utf-8") as f:
+current_dir = os.path.dirname(os.path.abspath(__file__))
+json_path = os.path.join(current_dir, 'static', 'subject_mapping.json')
+
+with open(json_path, "r", encoding="utf-8") as f:
     subject_mapping_json = json.load(f)
 subject_mapping = {k: tuple(v) for k, v in subject_mapping_json.items()}
 
