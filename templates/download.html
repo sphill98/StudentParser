@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download CSV</title>
+</head>
+<body>
+    <h1>Your file has been processed!</h1>
+    <p>
+        <a href="{{ url_for('download_file', filename=filename) }}">
+            <button>Download CSV</button>
+        </a>
+        <a href="{{ url_for('graph') }}">
+            <button>See Graph</button>
+        </a>
+    </p>
+</body>
+</html>

@@ -27,13 +27,16 @@ def upload_file():
         try:
             df = extract_subjects_from_pdf(filepath)
             
+            # Store dataframe in session
+            session['dataframe'] = df.to_json()
+
             # Generate a unique filename for the CSV
             csv_filename = f"output_{uuid.uuid4().hex}.csv"
             output_csv_path = os.path.join(app.config['UPLOAD_FOLDER'], csv_filename)
             
             df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
             
-            # Store the csv path in the session
+            # Store the csv path in the session for download
             session['csv_path'] = output_csv_path
             
             return render_template('download.html', filename=csv_filename)
@@ -45,9 +48,23 @@ def download_file(filename):
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     return send_file(path, as_attachment=True)
 
+from calculators import compute_main_subject_averages
+
 @app.route('/graph')
 def graph():
-    return render_template('graph.html')
+    df_json = session.get('dataframe')
+    if not df_json:
+        return "Dataframe not found in session. Please upload a file first."
+
+    df = pd.read_json(df_json)
+    averages = compute_main_subject_averages(df)
+    print(averages)
+    labels = ["국어", "수학", "영어", "사탐", "과탐"]
+    data = []
+    for l in labels:
+        data.append(averages[l])
+
+    return render_template('graph.html', labels=labels, data=data)
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])

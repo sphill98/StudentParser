@@ -56,8 +56,8 @@
 </div>
 
 <script>
-  const labels = ['국어', '수학', '영어', '사탐', '과탐'];
-  const values = [1, 1.47, 2.21, 2.50, 1.39];
+  const labels = {{ labels | tojson }};
+  const values = {{ data | tojson }};
   const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
 
   // 사용자 정의 플러그인: 다각형 내부 채우기
