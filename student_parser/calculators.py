@@ -1,9 +1,10 @@
 import pandas as pd
 
+
 def compute_main_subject_averages(df: pd.DataFrame) -> dict:
     # 1, 2학년 성적만 필터링
     valid_grades = ["1학년 1학기", "1학년 2학기", "2학년 1학기", "2학년 2학기"]
-    df = df[df["학년/학기"].isin(valid_grades)]
+    df = df.loc[df["학년/학기"].isin(valid_grades)].copy()
 
     # 숫자형으로 변환
     df["석차등급"] = pd.to_numeric(df["석차등급"], errors="coerce")
@@ -26,16 +27,18 @@ def compute_main_subject_averages(df: pd.DataFrame) -> dict:
     valid["통합교과"] = valid["교과 구분2"].map(subject_map)
     # 가중 평균 계산
     result = valid.groupby("통합교과").apply(
-        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum()
+        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum(),
+        include_groups=False
     ).round(2)
 
     # 딕셔너리로 반환
     return result.to_dict()
 
+
 def compute_science_subject_averages(df: pd.DataFrame) -> dict:
     # 1, 2학년 성적만 필터링
     valid_grades = ["1학년 1학기", "1학년 2학기", "2학년 1학기", "2학년 2학기"]
-    df = df[df["학년/학기"].isin(valid_grades)]
+    df = df.loc[df["학년/학기"].isin(valid_grades)].copy()
 
     # 숫자형으로 변환
     df["석차등급"] = pd.to_numeric(df["석차등급"], errors="coerce")
@@ -50,15 +53,17 @@ def compute_science_subject_averages(df: pd.DataFrame) -> dict:
     valid = valid[valid["과목명"].isin(science_subjects)].copy()
     # 가중 평균 계산
     result = valid.groupby("과목명").apply(
-        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum()
+        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum(),
+        include_groups=False
     ).round(2)
     # 딕셔너리로 반환
     return result.to_dict()
 
+
 def compute_liberal_subject_averages(df: pd.DataFrame) -> dict:
     # 1, 2학년 성적만 필터링
     valid_grades = ["1학년 1학기", "1학년 2학기", "2학년 1학기", "2학년 2학기"]
-    df = df[df["학년/학기"].isin(valid_grades)]
+    df = df.loc[df["학년/학기"].isin(valid_grades)].copy()
 
     # 숫자형으로 변환
     df["석차등급"] = pd.to_numeric(df["석차등급"], errors="coerce")
@@ -73,7 +78,8 @@ def compute_liberal_subject_averages(df: pd.DataFrame) -> dict:
     valid = valid[valid["과목명"].isin(science_subjects)].copy()
     # 가중 평균 계산
     result = valid.groupby("과목명").apply(
-        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum()
+        lambda g: (g["석차등급"] * g["단위"]).sum() / g["단위"].sum(),
+        include_groups=False
     ).round(2)
     # 딕셔너리로 반환
     return result.to_dict()
