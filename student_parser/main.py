@@ -4,13 +4,14 @@ import os
 from .parser import extract_subjects_from_pdf
 from .calculators import compute_main_subject_averages, compute_science_subject_averages, compute_liberal_subject_averages
 import uuid
+from io import StringIO
 
 main = Blueprint('main', __name__)
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
 def allowed_file(filename):
-    return '.' in filename and            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and             filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @main.route('/')
 def index():
@@ -72,7 +73,7 @@ def graph_general():
     if not df_json:
         return "Dataframe not found in session. Please upload a file first."
 
-    df = pd.read_json(df_json)
+    df = pd.read_json(StringIO(df_json))
     averages = compute_main_subject_averages(df)
     labels = ["국어", "수학", "영어", "사탐", "과탐"]
     data = []
@@ -87,7 +88,7 @@ def graph_science():
     if not df_json:
         return "Dataframe not found in session. Please upload a file first."
 
-    df = pd.read_json(df_json)
+    df = pd.read_json(StringIO(df_json))
     averages = compute_science_subject_averages(df)
     labels = ["통합과학", "물리학Ⅰ", "화학Ⅰ", "생명과학Ⅰ", "지구과학Ⅰ"]
     real_labels = []
@@ -105,7 +106,7 @@ def graph_liberal():
     if not df_json:
         return "Dataframe not found in session. Please upload a file first."
 
-    df = pd.read_json(df_json)
+    df = pd.read_json(StringIO(df_json))
     averages = compute_liberal_subject_averages(df)
     labels = ["통합사회", "한국사", "한국지리", "세계지리", "세계사", "동아시아사", "경제", "정치와 법", "생활과 윤리", "윤리와 사상", "사회·문화"]
     real_labels = []
