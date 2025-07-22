@@ -23,7 +23,7 @@ def index():
 def handle_grade_selection():
     curr_grade = request.form.get('curr_grade')
     if curr_grade is None:
-        flash('Please select a grade.')
+        flash('현재 상태를 입력해주세요.')
         return redirect(url_for('main.index'))
     session['curr_grade'] = int(curr_grade)
     return redirect(url_for('main.upload'))
