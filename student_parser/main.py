@@ -19,48 +19,52 @@ def index():
         session.clear()
     return render_template('index.html')
 
+@main.route('/handle_grade_selection', methods=['POST'])
+def handle_grade_selection():
+    curr_grade = request.form.get('curr_grade')
+    if curr_grade is None:
+        flash('Please select a grade.')
+        return redirect(url_for('main.index'))
+    session['curr_grade'] = int(curr_grade)
+    return redirect(url_for('main.upload'))
+
 @main.route('/upload', methods=['GET', 'POST'])
-def upload_file():
+def upload():
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
-            return redirect(url_for('main.index'))
+            return redirect(request.url)
         file = request.files['file']
         if file.filename == '':
             flash('No selected file')
-            return redirect(url_for('main.index'))
+            return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = file.filename
-            # Use app's upload folder config
             filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
-            
             try:
                 df = extract_subjects_from_pdf(filepath)
-                
                 session['dataframe'] = df.to_json()
-
                 csv_filename = f"output_{uuid.uuid4().hex}.csv"
                 output_csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_filename)
-                
                 df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
-                
                 session['csv_path'] = output_csv_path
-                
-                return render_template('download.html', filename=csv_filename)
+                return redirect(url_for('main.results'))
             except Exception as e:
                 flash(f"An error occurred: {e}")
                 return redirect(url_for('main.index'))
         else:
             flash('Only PDF files are allowed')
-            return redirect(url_for('main.index'))
-    else: # GET request
-        csv_path = session.get('csv_path')
-        if csv_path and os.path.exists(csv_path):
-            filename = os.path.basename(csv_path)
-            return render_template('download.html', filename=filename)
-        else:
-            return redirect(url_for('main.index'))
+            return redirect(request.url)
+    return render_template('upload.html')
+
+@main.route('/results')
+def results():
+    csv_path = session.get('csv_path')
+    if not csv_path or not os.path.exists(csv_path):
+        return redirect(url_for('main.index'))
+    filename = os.path.basename(csv_path)
+    return render_template('download.html', filename=filename)
 
 @main.route('/download/<filename>')
 def download_file(filename):
@@ -70,26 +74,34 @@ def download_file(filename):
 @main.route('/graph-general')
 def graph_general():
     df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
     if not df_json:
-        return "Dataframe not found in session. Please upload a file first."
-
+        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
+    if curr_grade is None:
+        return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
-    averages = compute_main_subject_averages(df)
+    averages = compute_main_subject_averages(df, curr_grade)
+    # For Logging
+    print(averages, curr_grade)
     labels = ["국어", "수학", "영어", "사탐", "과탐"]
     data = []
     for l in labels:
-        data.append(averages[l])
+        data.append(averages.get(l))
 
     return render_template('graph_general.html', labels=labels, data=data)
 
 @main.route('/graph-science')
 def graph_science():
     df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
     if not df_json:
-        return "Dataframe not found in session. Please upload a file first."
-
+        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
+    if curr_grade is None:
+        return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
-    averages = compute_science_subject_averages(df)
+    averages = compute_science_subject_averages(df, curr_grade)
+    # For Logging
+    print(averages, curr_grade)
     labels = ["통합과학", "물리학Ⅰ", "화학Ⅰ", "생명과학Ⅰ", "지구과학Ⅰ"]
     real_labels = []
     data = []
@@ -103,11 +115,15 @@ def graph_science():
 @main.route('/graph-liberal')
 def graph_liberal():
     df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
     if not df_json:
-        return "Dataframe not found in session. Please upload a file first."
-
+        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
+    if curr_grade is None:
+        return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
-    averages = compute_liberal_subject_averages(df)
+    averages = compute_liberal_subject_averages(df, curr_grade)
+    # For Logging
+    print(averages, curr_grade)
     labels = ["통합사회", "한국사", "한국지리", "세계지리", "세계사", "동아시아사", "경제", "정치와 법", "생활과 윤리", "윤리와 사상", "사회·문화"]
     real_labels = []
     data = []
