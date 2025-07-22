@@ -54,13 +54,13 @@
                 <a href="{{ url_for('main.download_file', filename=filename) }}" class="btn btn-custom btn-download w-100">성적표 CSV 다운로드</a>
             </div>
             <div class="col-md-4">
-                <a href="{{ url_for('main.graph_general') }}" class="btn btn-custom btn-graph w-100">종합 교과</a>
+                <a href="{{ url_for('main.graph_general') }}" class="btn btn-custom btn-graph w-100">교과종합 성적 분석</a>
             </div>
             <div class="col-md-4">
-                <a href="{{ url_for('main.graph_science') }}" class="btn btn-custom btn-graph w-100">과학탐구</a>
+                <a href="{{ url_for('main.graph_science') }}" class="btn btn-custom btn-graph w-100">과학탐구 성적 분석</a>
             </div>
             <div class="col-md-4">
-                <a href="{{ url_for('main.graph_liberal') }}" class="btn btn-custom btn-graph w-100">사회탐구</a>
+                <a href="{{ url_for('main.graph_liberal') }}" class="btn btn-custom btn-graph w-100">사회탐구 성적 분석</a>
             </div>
             <div class="col-12 mt-4">
                 <a href="{{ url_for('main.index', clear_session=True) }}" class="btn btn-custom btn-home w-100">처음으로 돌아가기</a>
