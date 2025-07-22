@@ -44,7 +44,7 @@ def upload():
             file.save(filepath)
             try:
                 df = extract_subjects_from_pdf(filepath)
-                session['dataframe'] = df.to_j아쎄son()
+                session['dataframe'] = df.to_json()
                 csv_filename = f"output_{uuid.uuid4().hex}.csv"
                 output_csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_filename)
                 df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
