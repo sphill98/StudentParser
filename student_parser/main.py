@@ -44,15 +44,14 @@ def upload():
             file.save(filepath)
             try:
                 df = extract_subjects_from_pdf(filepath)
-                session['dataframe'] = df.to_json()
+                session['dataframe'] = df.to_j아쎄son()
                 csv_filename = f"output_{uuid.uuid4().hex}.csv"
                 output_csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_filename)
                 df.to_csv(output_csv_path, index=False, encoding='utf-8-sig')
                 session['csv_path'] = output_csv_path
                 return redirect(url_for('main.results'))
             except Exception as e:
-                flash(f"An error occurred: {e}")
-                return redirect(url_for('main.index'))
+                return render_template('error.html')
         else:
             flash('Only PDF files are allowed')
             return redirect(request.url)
@@ -81,6 +80,8 @@ def graph_general():
         return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
     averages = compute_main_subject_averages(df, curr_grade)
+    if not averages:
+        return render_template('error.html')
     # For Logging
     print(averages, curr_grade)
     labels = ["국어", "수학", "영어", "사탐", "과탐"]
@@ -100,6 +101,8 @@ def graph_science():
         return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
     averages = compute_science_subject_averages(df, curr_grade)
+    if not averages:
+        return render_template('error.html')
     # For Logging
     print(averages, curr_grade)
     labels = ["통합과학", "물리학Ⅰ", "화학Ⅰ", "생명과학Ⅰ", "지구과학Ⅰ"]
@@ -122,6 +125,8 @@ def graph_liberal():
         return "학년 선택을 먼저 해주세요."
     df = pd.read_json(StringIO(df_json))
     averages = compute_liberal_subject_averages(df, curr_grade)
+    if not averages:
+        return render_template('error.html')
     # For Logging
     print(averages, curr_grade)
     labels = ["통합사회", "한국사", "한국지리", "세계지리", "세계사", "동아시아사", "경제", "정치와 법", "생활과 윤리", "윤리와 사상", "사회·문화"]
