@@ -75,12 +75,31 @@
       border-radius: 50px;
       text-decoration: none;
       transition: all 0.3s ease;
+      margin-top: 30px;
     }
     .btn-custom:hover {
       background-color: #0b5ed7;
       border-color: #0a58ca;
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      .btn-custom {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+      canvas {
+        font-size: 10px; /* 기본 폰트 크기 줄이기 */
+      }
+      .chartjs-tooltip {
+        font-size: 10px;
+      }
     }
   </style>
 </head>
@@ -90,14 +109,6 @@
   <h1>교과별 종합 성적 분포</h1>
   <div class="chart-container">
     <canvas id="gradeRadarChart"></canvas>
-  </div>
-
-  <div class="legend-container">
-    <div class="legend-item"><div class="legend-color" style="background-color: #FF6384;"></div>국어</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #36A2EB;"></div>수학</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #FFCE56;"></div>영어</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #4BC0C0;"></div>사탐</div>
-    <div class="legend-item"><div class="legend-color" style="background-color: #9966FF;"></div>과탐</div>
   </div>
 
   <a href="{{ url_for('main.results') }}" class="btn-custom">결과 페이지로 돌아가기</a>
@@ -206,7 +217,7 @@
           },
           pointLabels: {
             font: {
-              size: 15,
+              size: 12,
               weight: '500'
             },
             color: '#212529'
@@ -220,7 +231,7 @@
         }
       },
       plugins: {
-        legend: { display: false },
+        legend: { display: true },
         datalabels: {
           color: '#000',
           font: {
