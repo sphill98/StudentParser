@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, send_file, session, flash
 import pandas as pd
 import os
 from .parser import extract_subjects_from_pdf
-from .calculators import compute_main_subject_averages, compute_science_subject_averages, compute_liberal_subject_averages, compute_overall_trend, compute_major_trend
+from .calculators import compute_main_subject_averages, compute_science_subject_averages, compute_liberal_subject_averages, compute_overall_trend, compute_major_trend, _get_valid_semesters
 import uuid
 from io import StringIO
 
@@ -12,6 +12,14 @@ ALLOWED_EXTENSIONS = {'pdf'}
 
 def allowed_file(filename):
     return '.' in filename and             filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def _get_processed_data():
+    df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
+    if not df_json or curr_grade is None:
+        return None, None
+    df = pd.read_json(StringIO(df_json))
+    return df, curr_grade
 
 @main.route('/')
 def index():
@@ -44,6 +52,11 @@ def upload():
             file.save(filepath)
             try:
                 df = extract_subjects_from_pdf(filepath)
+                curr_grade = session.get('curr_grade')
+                if curr_grade is not None:
+                    valid_semesters = _get_valid_semesters(curr_grade)
+                    df = df[df["학년/학기"].isin(valid_semesters)].copy()
+
                 session['dataframe'] = df.to_json()
                 csv_filename = f"output_{uuid.uuid4().hex}.csv"
                 output_csv_path = os.path.join(current_app.config['UPLOAD_FOLDER'], csv_filename)
@@ -72,13 +85,9 @@ def download_file(filename):
 
 @main.route('/graph-general')
 def graph_general():
-    df_json = session.get('dataframe')
-    curr_grade = session.get('curr_grade')
-    if not df_json:
-        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
-    if curr_grade is None:
-        return "학년 선택을 먼저 해주세요."
-    df = pd.read_json(StringIO(df_json))
+    df, curr_grade = _get_processed_data()
+    if df is None:
+        return render_template('error.html')
     averages = compute_main_subject_averages(df, curr_grade)
     if not averages:
         return render_template('error.html')
@@ -93,13 +102,9 @@ def graph_general():
 
 @main.route('/graph-science')
 def graph_science():
-    df_json = session.get('dataframe')
-    curr_grade = session.get('curr_grade')
-    if not df_json:
-        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
-    if curr_grade is None:
-        return "학년 선택을 먼저 해주세요."
-    df = pd.read_json(StringIO(df_json))
+    df, curr_grade = _get_processed_data()
+    if df is None:
+        return render_template('error.html')
     averages = compute_science_subject_averages(df, curr_grade)
     if not averages:
         return render_template('error.html')
@@ -117,13 +122,9 @@ def graph_science():
 
 @main.route('/graph-liberal')
 def graph_liberal():
-    df_json = session.get('dataframe')
-    curr_grade = session.get('curr_grade')
-    if not df_json:
-        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
-    if curr_grade is None:
-        return "학년 선택을 먼저 해주세요."
-    df = pd.read_json(StringIO(df_json))
+    df, curr_grade = _get_processed_data()
+    if df is None:
+        return render_template('error.html')
     averages = compute_liberal_subject_averages(df, curr_grade)
     if not averages:
         return render_template('error.html')
@@ -141,40 +142,20 @@ def graph_liberal():
 
 @main.route('/chart-liberal')
 def chart_liberal():
-    df_json = session.get('dataframe')
-    curr_grade = session.get('curr_grade')
-    if not df_json:
-        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
-    if curr_grade is None:
-        return "학년 선택을 먼저 해주세요."
-    df = pd.read_json(StringIO(df_json))
-    all_labels = ['1학년 1학기', '1학년 2학기', '2학년 1학기', '2학년 2학기', '3학년 1학기', '3학년 2학기']
-    if curr_grade == 0:  # 2학년 재학
-        labels = all_labels[:4]
-    elif curr_grade == 1:  # 3학년 재학
-        labels = all_labels[:5]
-    else:  # 졸업
-        labels = all_labels
+    df, curr_grade = _get_processed_data()
+    if df is None:
+        return render_template('error.html')
+    labels = _get_valid_semesters(curr_grade)
     overall_grades = compute_overall_trend(df, curr_grade)
     major_grades = compute_major_trend(df, curr_grade, ["국어", "수학", "영어", "사회"])
     return render_template('chart_liberal.html', labels=labels, overall_grades=overall_grades, major_grades=major_grades)
 
 @main.route('/chart-science')
 def chart_science():
-    df_json = session.get('dataframe')
-    curr_grade = session.get('curr_grade')
-    if not df_json:
-        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
-    if curr_grade is None:
-        return "학년 선택을 먼저 해주세요."
-    df = pd.read_json(StringIO(df_json))
-    all_labels = ['1학년 1학기', '1학년 2학기', '2학년 1학기', '2학년 2학기', '3학년 1학기', '3학년 2학기']
-    if curr_grade == 0:  # 2학년 재학
-        labels = all_labels[:4]
-    elif curr_grade == 1:  # 3학년 재학
-        labels = all_labels[:5]
-    else:  # 졸업
-        labels = all_labels
+    df, curr_grade = _get_processed_data()
+    if df is None:
+        return render_template('error.html')
+    labels = _get_valid_semesters(curr_grade)
     overall_grades = compute_overall_trend(df, curr_grade)
     major_grades = compute_major_trend(df, curr_grade, ["국어", "수학", "영어", "과학"])
     return render_template('chart_science.html', labels=labels, overall_grades=overall_grades, major_grades=major_grades)
