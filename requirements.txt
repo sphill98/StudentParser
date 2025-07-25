@@ -1,5 +1,4 @@
 flask~=3.1.1
-pdfplumber
 pymupdf
 pandas~=2.3.1
 gunicorn

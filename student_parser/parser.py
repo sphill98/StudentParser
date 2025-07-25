@@ -1,7 +1,3 @@
-# 학년 정보 감지 함수
-def detect_grade(line: str) -> str:
-    match = re.match(r"\[(\d)학년\]", line)
-    return f"{match.group(1)}학년" if match else None
 import fitz  # PyMuPDF
 import re
 import pandas as pd
@@ -15,6 +11,11 @@ json_path = os.path.join(current_dir, 'static', 'subject_mapping.json')
 with open(json_path, "r", encoding="utf-8") as f:
     subject_mapping_json = json.load(f)
 subject_mapping = {k: tuple(v) for k, v in subject_mapping_json.items()}
+
+# 학년 정보 감지 함수
+def detect_grade(line: str) -> str:
+    match = re.match(r"\[(\d)학년\]", line)
+    return f"{match.group(1)}학년" if match else None
 
 def detect_semester(line: str) -> str:
     return line + "학기" if line in ["1", "2"] else None
