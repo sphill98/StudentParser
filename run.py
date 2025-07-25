@@ -14,7 +14,7 @@ services = {
     },
     "frontend_service": {
         "port": Config.FRONTEND_SERVICE_PORT,
-        "env": {"PARSING_SERVICE_URL": f"http://localhost:{Config.PARSING_SERVICE_PORT}"}
+        "env": {"PARSING_SERVICE_URL": f"http://localhost:{Config.PARSING_SERVICE_PORT}", "FLASK_SECRET_KEY": Config.SECRET_KEY}
     }
 }
 
@@ -60,17 +60,19 @@ def run_service(name, config):
     # Prepare environment variables
     run_env = os.environ.copy()
     run_env.update({
-        "FLASK_APP": "app.py",
-        "FLASK_RUN_PORT": str(config['port']),
-        "FLASK_RUN_HOST": "0.0.0.0"
+        "FLASK_APP": "app.py"
     })
     run_env.update(config.get("env", {}))
 
     # Use os.setsid to create a new process session, making this process the group leader.
     # This allows us to kill the process and all its children (like the reloader) at once.
+    app_module = f"{name}.app:app"
     process = subprocess.Popen(
-        [os.path.join(venv_dir, "bin", "flask"), "run"],
-        cwd=service_dir,
+        [os.path.join(venv_dir, "bin", "gunicorn"),
+         "--workers", "9", # For development, 1 worker is usually enough
+         "--bind", f"0.0.0.0:{config['port']}",
+         app_module],
+        cwd=os.path.abspath(os.path.join(service_dir, os.pardir)),
         env=run_env,
         preexec_fn=os.setsid
     )
