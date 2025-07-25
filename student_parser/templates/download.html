@@ -39,6 +39,10 @@
             background-color: #17a2b8;
             color: white;
         }
+        .btn-trend {
+            background-color: #fd7e14;
+            color: white;
+        }
         .btn-home {
             background-color: #6c757d;
             color: white;
@@ -63,10 +67,10 @@
                 <a href="{{ url_for('main.graph_liberal') }}" class="btn btn-custom btn-graph w-100">사회탐구 성적 분석</a>
             </div>
             <div class="col-md-6">
-                <a href="{{ url_for('main.chart_science') }}" class="btn btn-custom btn-graph w-100">이과 추세선</a>
+                <a href="{{ url_for('main.chart_science') }}" class="btn btn-custom btn-trend w-100">이과 추세선</a>
             </div>
             <div class="col-md-6">
-                <a href="{{ url_for('main.chart_liberal') }}" class="btn btn-custom btn-graph w-100">문과 추세선</a>
+                <a href="{{ url_for('main.chart_liberal') }}" class="btn btn-custom btn-trend w-100">문과 추세선</a>
             </div>
             <div class="col-12 mt-4">
                 <a href="{{ url_for('main.index', clear_session=True) }}" class="btn btn-custom btn-home w-100">처음으로 돌아가기</a>
