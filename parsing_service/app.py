@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, request, jsonify
 import os
 import pandas as pd
@@ -13,11 +14,18 @@ from .calculators import (
 import uuid
 from config.config import Config
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = Config.UPLOAD_FOLDER
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+@app.before_request
+def log_request_info():
+    logging.info(f"IP: {request.remote_addr}, Path: {request.path}, Method: {request.method}")
 
 @app.route('/parse', methods=['POST'])
 def parse_and_calculate():
