@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, send_file, session, flash
 import pandas as pd
 import os
 from .parser import extract_subjects_from_pdf
-from .calculators import compute_main_subject_averages, compute_science_subject_averages, compute_liberal_subject_averages
+from .calculators import compute_main_subject_averages, compute_science_subject_averages, compute_liberal_subject_averages, compute_overall_trend, compute_major_trend
 import uuid
 from io import StringIO
 
@@ -138,3 +138,43 @@ def graph_liberal():
             data.append(averages[l])
 
     return render_template('graph_liberal.html', labels=real_labels, data=data)
+
+@main.route('/chart-liberal')
+def chart_liberal():
+    df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
+    if not df_json:
+        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
+    if curr_grade is None:
+        return "학년 선택을 먼저 해주세요."
+    df = pd.read_json(StringIO(df_json))
+    all_labels = ['1학년 1학기', '1학년 2학기', '2학년 1학기', '2학년 2학기', '3학년 1학기', '3학년 2학기']
+    if curr_grade == 0:  # 2학년 재학
+        labels = all_labels[:4]
+    elif curr_grade == 1:  # 3학년 재학
+        labels = all_labels[:5]
+    else:  # 졸업
+        labels = all_labels
+    overall_grades = compute_overall_trend(df, curr_grade)
+    major_grades = compute_major_trend(df, curr_grade, ["국어", "수학", "영어", "사회"])
+    return render_template('chart_liberal.html', labels=labels, overall_grades=overall_grades, major_grades=major_grades)
+
+@main.route('/chart-science')
+def chart_science():
+    df_json = session.get('dataframe')
+    curr_grade = session.get('curr_grade')
+    if not df_json:
+        return "파일이 없습니다. 파일을 먼저 업로드해주세요."
+    if curr_grade is None:
+        return "학년 선택을 먼저 해주세요."
+    df = pd.read_json(StringIO(df_json))
+    all_labels = ['1학년 1학기', '1학년 2학기', '2학년 1학기', '2학년 2학기', '3학년 1학기', '3학년 2학기']
+    if curr_grade == 0:  # 2학년 재학
+        labels = all_labels[:4]
+    elif curr_grade == 1:  # 3학년 재학
+        labels = all_labels[:5]
+    else:  # 졸업
+        labels = all_labels
+    overall_grades = compute_overall_trend(df, curr_grade)
+    major_grades = compute_major_trend(df, curr_grade, ["국어", "수학", "영어", "과학"])
+    return render_template('chart_science.html', labels=labels, overall_grades=overall_grades, major_grades=major_grades)
