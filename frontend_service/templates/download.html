@@ -52,11 +52,11 @@
 </head>
 <body>
     <div class="container text-center">
-        <h1 class="mb-4">분석 결과</h1>
-        <p class="lead mb-5">아래에서 원하시는 작업을 선택하세요.</p>
+        <h1 class="mb-4">분석 결과 보기</h1>
+        <p class="lead mb-5">성적 분석이 완료되었습니다. 아래에서 원하시는 분석 결과를 확인하세요.</p>
         <div class="row g-3">
             <div class="col-12">
-                <a href="{{ url_for('main.download_file', filename=filename) }}" class="btn btn-custom btn-download w-100">성적표 CSV 다운로드</a>
+                <a href="{{ url_for('main.download_csv') }}" class="btn btn-custom btn-download w-100">성적표 CSV 다운로드</a>
             </div>
             <div class="col-md-4">
                 <a href="{{ url_for('main.graph_general') }}" class="btn btn-custom btn-graph w-100">교과종합 성적 분석</a>

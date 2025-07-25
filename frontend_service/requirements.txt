@@ -1,0 +1,4 @@
+flask~=3.1.1
+gunicorn
+requests
+pandas~=2.3.1

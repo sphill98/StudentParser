@@ -25,4 +25,4 @@ uploads/
 .DS_Store
 
 # Config
-config.py
+config/config.py

@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -57,8 +58,9 @@
 </head>
 <body>
     <div class="container">
+        <i class="fas fa-exclamation-triangle fa-5x text-danger mb-4"></i>
         <h1>오류가 발생했습니다</h1>
-        <p>파일을 처리하는 중 예상치 못한 오류가 발생했습니다. <br>올바른 형식의 생활기록부 파일인지 확인 후 다시 시도해주세요.</p>
+        <p>파일을 처리하는 중 예상치 못한 오류가 발생했습니다. <br>올바른 형식의 PDF 파일인지 확인 후 다시 시도해주세요.</p>
         <a href="{{ url_for('main.index') }}" class="btn-custom">처음으로 돌아가기</a>
     </div>
 </body>
