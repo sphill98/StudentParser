@@ -23,6 +23,9 @@ def _get_processed_data():
 
 @main.route('/')
 def index():
+    client_ip = request.remote_addr
+    requested_path = request.path
+    current_app.logger.info(f"Client IP: {client_ip}, Requested Path: {requested_path}")
     if request.args.get('clear_session'):
         session.clear()
     return render_template('index.html')
@@ -38,6 +41,9 @@ def handle_grade_selection():
 
 @main.route('/upload', methods=['GET', 'POST'])
 def upload():
+    client_ip = request.remote_addr
+    requested_path = request.path
+    current_app.logger.info(f"Client IP: {client_ip}, Requested Path: {requested_path}")
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -72,6 +78,9 @@ def upload():
 
 @main.route('/results')
 def results():
+    client_ip = request.remote_addr
+    requested_path = request.path
+    current_app.logger.info(f"Client IP: {client_ip}, Requested Path: {requested_path}")
     csv_path = session.get('csv_path')
     if not csv_path or not os.path.exists(csv_path):
         return redirect(url_for('main.index'))
