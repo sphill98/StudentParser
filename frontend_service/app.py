@@ -19,7 +19,8 @@ def create_app():
 
     return app
 
-app = create_app()
-
-if __name__ == '__main__':
-    app.run(host=Config.FRONTEND_HOST, port=Config.FRONTEND_PORT, debug=True)
+try:
+    app = create_app()
+except Exception as e:
+    logging.error(f"Error creating Flask app: {e}")
+    raise # Re-raise the exception to stop the process
