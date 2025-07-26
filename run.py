@@ -3,18 +3,24 @@ import sys
 import os
 import atexit
 import signal
-
 from config.config import Config
 
 # --- Configuration ---
 services = {
     "parsing_service": {
-        "port": Config.PARSING_SERVICE_PORT,
+        "host": Config.PARSING_HOST,
+        "port": Config.PARSING_PORT,
         "env": {}
     },
     "frontend_service": {
-        "port": Config.FRONTEND_SERVICE_PORT,
-        "env": {"PARSING_SERVICE_URL": f"http://localhost:{Config.PARSING_SERVICE_PORT}", "FLASK_SECRET_KEY": Config.SECRET_KEY}
+        "host": Config.FRONTEND_HOST,
+        "port": Config.FRONTEND_PORT,
+        "env": {"PARSING_SERVICE_URL": f"http://{Config.PARSING_HOST}:{Config.PARSING_PORT}", "FLASK_SECRET_KEY": Config.SECRET_KEY}
+    },
+    "auth_service": {
+        "host": Config.AUTH_HOST,
+        "port": Config.AUTH_PORT,
+        "env": {}
     }
 }
 
@@ -55,7 +61,7 @@ def run_service(name, config):
     subprocess.run([pip_executable, "install", "-r", "requirements.txt"], check=True, cwd=service_dir)
 
     # 3. Start the Flask app
-    print(f"Starting {name} on port {config['port']}...")
+    print(f"Starting {name} on {config['host']}:{config['port']}...")
     
     # Prepare environment variables
     run_env = os.environ.copy()
@@ -69,8 +75,8 @@ def run_service(name, config):
     app_module = f"{name}.app:app"
     process = subprocess.Popen(
         [os.path.join(venv_dir, "bin", "gunicorn"),
-         "--workers", "9", # For development, 1 worker is usually enough
-         "--bind", f"0.0.0.0:{config['port']}",
+         "--workers", "1", # For development, 1 worker is usually enough
+         "--bind", f"{config['host']}:{config['port']}",
          app_module],
         cwd=os.path.abspath(os.path.join(service_dir, os.pardir)),
         env=run_env,
@@ -87,8 +93,9 @@ if __name__ == "__main__":
 
     print("\n" + "="*40)
     print("All services are running.")
-    print("- FrontEnd Service (Frontend): http://localhost:" + str(Config.FRONTEND_SERVICE_PORT))
-    print("- Parsing Service (API):     http://localhost:" + str(Config.PARSING_SERVICE_PORT))
+    print("- FrontEnd Service (Frontend): http://" + Config.FRONTEND_HOST + ":" + str(Config.FRONTEND_PORT))
+    print("- Parsing Service (API):     http://" + Config.PARSING_HOST + ":" + str(Config.PARSING_PORT))
+    print("- Auth Service (Auth):       http://" + Config.AUTH_HOST + ":" + str(Config.AUTH_PORT))
     print("\nPress Ctrl+C to stop all services.")
     print("="*40 + "\n")
 

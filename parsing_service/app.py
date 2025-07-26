@@ -77,4 +77,4 @@ def parse_and_calculate():
     return jsonify({"error": "Invalid file type"}), 400
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=Config.PARSING_SERVICE_PORT, debug=True)
+    app.run(host=Config.PARSING_HOST, port=Config.PARSING_PORT, debug=True)

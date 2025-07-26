@@ -26,3 +26,4 @@ uploads/
 
 # Config
 config/config.py
+.env

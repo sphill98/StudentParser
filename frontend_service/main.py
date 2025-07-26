@@ -8,7 +8,7 @@ from config.config import Config
 main = Blueprint('main', __name__)
 
 ALLOWED_EXTENSIONS = {'pdf'}
-PARSING_SERVICE_URL = f"http://localhost:{Config.PARSING_SERVICE_PORT}"
+PARSING_SERVICE_URL = f"http://localhost:{Config.PARSING_PORT}"
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

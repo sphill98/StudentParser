@@ -22,4 +22,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=Config.FRONTEND_SERVICE_PORT, debug=True)
+    app.run(host=Config.FRONTEND_HOST, port=Config.FRONTEND_PORT, debug=True)
