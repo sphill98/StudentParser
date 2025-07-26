@@ -27,3 +27,6 @@ uploads/
 # Config
 config/config.py
 .env
+
+#DB
+instance/
